@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "omnitrace"
+version = "0.1.0"
+description = "A privacy-first, local AI debugging and state-orchestration fabric."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "Abdul Hadi", email = "hadiabdul300908@gmail.com" }
+]
+dependencies = [
+    # Add your core runtime dependencies here (e.g., "ollama", "flask")
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "ruff",     # Modern, incredibly fast linter/formatter
+    "mypy"      # Type checking
+]
+
+[project.scripts]
+omnitrace = "omnitrace.__main__:main"
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
