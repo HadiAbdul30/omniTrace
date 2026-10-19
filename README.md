@@ -118,6 +118,13 @@ This mode is useful for debugging background services and applications that writ
 
 > **Note:** Log monitoring requires the application to write its errors and stack traces to the monitored file. Exact detection behavior depends on the implementation.
 
+### Mode 3: Dashboard (Visualize Your Debug Ledger)
+
+Launch the local web dashboard to explore historical crash logs, review AI-generated diagnoses, and track debugging activity.
+
+```bash
+omnitrace --ui
+
 ## ⚙️ Configuration
 
 OmniTrace uses Ollama to run a local language model.
