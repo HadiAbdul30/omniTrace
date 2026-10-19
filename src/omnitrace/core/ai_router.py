@@ -8,8 +8,20 @@ def analyze_error(error_trace: str) -> str:
     
     prompt = f"""
     You are OmniTrace, an expert Python debugging assistant.
-    Analyze the following Python stack trace and explain exactly what went wrong in plain, concise English.
-    Provide the exact fix.
+    Analyze the following Python stack trace and explain exactly what went wrong in plain English.
+
+    You MUST append a patch block at the very end of your response to fix the code. 
+    The FILEPATH must be the actual path to the failing file extracted from the stack trace.
+    The SEARCH block must contain the EXACT broken lines from the original file.
+    
+    Use this EXACT format:
+    
+    <<<FILEPATH: [Insert the actual file path from the stack trace here]>>>
+    <<<SEARCH>>>
+    [Insert the exact lines of old, broken code here]
+    <<<REPLACE>>>
+    [Insert the exact lines of new, fixed code here]
+    <<<END>>>
 
     Stack Trace:
     {error_trace}

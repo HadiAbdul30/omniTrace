@@ -9,6 +9,8 @@ from omnitrace.core.daemon import start_daemon
 from omnitrace.core.dispatcher import send_to_discord
 from omnitrace.db.database import init_db, log_error
 from omnitrace.ui.server import start_ui
+from rich.prompt import Confirm
+from omnitrace.core.patcher import extract_and_apply_patch
 
 console = Console()
 
@@ -29,6 +31,11 @@ def run_wrapper_mode(target_script: str):
 
         send_to_discord(error_trace, diagnosis)
         log_error(error_trace, diagnosis)
+        
+        if "<<<FILEPATH:" in diagnosis:
+            console.print("\n")
+            if Confirm.ask("[bold yellow]OmniTrace generated an auto-fix. Do you want to apply it?[/bold yellow]"):
+                extract_and_apply_patch(diagnosis)
 
         return result.returncode
     else:
