@@ -6,6 +6,7 @@ from rich.panel import Panel
 from rich.markdown import Markdown
 from omnitrace.core.ai_router import analyze_error
 from omnitrace.core.dispatcher import send_to_discord
+from omnitrace.db.database import log_error
 
 console = Console()
 
@@ -18,7 +19,10 @@ def process_error(error_trace: str):
         
     console.print("\n[bold cyan]🩺 OMNITRACE DIAGNOSIS:[/bold cyan]\n")
     console.print(Markdown(diagnosis))
+
     send_to_discord(error_trace.strip(), diagnosis)
+    log_error(error_trace.strip(), diagnosis)
+    
     console.print("\n[bold dim]OmniTrace is actively watching for new errors...[/bold dim]\n")
 
 def start_daemon(log_file: str):
