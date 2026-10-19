@@ -1,68 +1,225 @@
-# OmniTrace
+<div align="center">
 
-**A privacy-first, local AI debugging and state-orchestration fabric.**
+# ⚡ OmniTrace
 
-OmniTrace is a local AI-powered debugging tool that monitors Python scripts and application logs, detects errors, and uses locally running Large Language Models (LLMs) to explain exceptions and suggest code fixes.
+### Your local AI debugging daemon. From runtime crash to code patch.
 
-Powered by [Ollama](https://ollama.com/), OmniTrace helps developers diagnose bugs, review historical crashes, and streamline debugging without sending proprietary source code to external AI services.
+**Stop copy-pasting stack traces. Start fixing bugs where they happen.**
 
-## 🎬 Demo
+OmniTrace is a local-first, privacy-focused Python debugging daemon that detects runtime failures, uses a locally running LLM to diagnose the root cause, and generates patches for your source code—with your approval.
 
-![OmniTrace Auto-Patcher Demo](demo.gif)
+No cloud AI APIs. No leaking proprietary code. No switching context between your terminal and a chatbot.
 
-*OmniTrace Auto-Patcher in action.*
+<br>
+
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python&logoColor=white)
+![License](https://img.shields.io/badge/License-MIT-green.svg)
+![AI](https://img.shields.io/badge/AI-Local%20LLM-purple?logo=ollama)
+![Status](https://img.shields.io/badge/Status-v1.0-orange)
+![Privacy](https://img.shields.io/badge/Privacy-Local--First-brightgreen)
+
+<br>
+
+**[Features](#-features) · [Quick Start](#-quick-start) · [Architecture](#-architecture) · [Safety](#-safety-first) · [Roadmap](#-roadmap)**
+
+</div>
+
+---
+
+## 🎬 See OmniTrace in Action
+
+![OmniTrace Demo](demo.gif)
+
+*From detecting a crash to generating a patch, reviewing the change, and recovering from a bad fix—all within your local development workflow.*
+
+---
+
+## 💡 Why I Built This
+
+Every developer knows the routine.
+
+Your Python application crashes. You copy the traceback, open a browser, paste the error into an AI chatbot, provide additional context, copy the suggested fix, switch back to your editor, and hope the solution doesn't break something else.
+
+It works. But the workflow is fragmented, repetitive, and potentially dangerous when the code belongs to a proprietary codebase.
+
+**I built OmniTrace to bring AI-assisted debugging directly into the runtime workflow.**
+
+Instead of waiting for you to ask for help, OmniTrace watches for failures, captures diagnostic information, and routes the error to a locally running language model. It then generates a targeted patch that you can review and approve.
+
+The goal is simple: reduce the distance between *something broke* and *I have a fix to review*.
+
+### Three principles drive the project
+
+**🔒 Privacy by default**
+
+Your source code and stack traces stay on your machine when using a local Ollama instance. There is no requirement to send debugging context to a hosted AI API.
+
+**⚡ Faster debugging loops**
+
+Catch failures where they occur. Skip the manual copy-paste cycle and get actionable diagnoses directly in your terminal.
+
+**🛠️ From explanation to action**
+
+OmniTrace goes beyond generating suggestions. Its patching workflow can write an AI-generated change directly to a source file after you approve it, with a backup available for rollback.
+
+> **The key idea:** AI should participate in the development workflow, not just answer questions about it.
+
+---
 
 ## ✨ Features
 
-- **🔒 Privacy First:** Run AI-powered debugging locally without relying on external AI APIs.
-- **🤖 AI-Powered Diagnostics:** Get plain-English explanations of exceptions and stack traces.
-- **🛠️ Automated Fix Suggestions:** Receive actionable recommendations to help resolve bugs.
-- **⚡ Real-Time Log Monitoring:** Detect and diagnose errors as they appear in application logs.
-- **📊 Visual Debug Dashboard:** Browse historical crashes and AI-generated diagnoses through a local web interface.
-- **🗃️ Persistent Debug Ledger:** Store historical debugging records in a local SQLite database.
-- **🦙 Local LLM Support:** Use models available through Ollama.
-- **💻 Multiple Operating Modes:** Debug individual Python scripts, monitor application logs, or explore your debugging history.
+### 🔍 1. Background Crash Detection
 
-## 📋 Requirements
+Run OmniTrace in watch mode and let it monitor your application's logs.
 
-Before installing OmniTrace, ensure you have:
+```bash
+omnitrace --watch app.log
+```
 
-- Python 3.9 or later.
-- [Ollama](https://ollama.com/) installed and running.
-- Git installed on your machine.
+When a supported Python traceback appears, OmniTrace initiates the diagnostic workflow.
 
-> **Note:** Confirm the minimum supported Python version against your project's actual requirements.
+- Monitors a log file for runtime failures.
+- Extracts relevant error information.
+- Routes the diagnostic context to your local AI model.
+- Records debugging history for later inspection.
 
-## 🚀 Installation
+No need to manually submit every exception to an assistant.
 
-### 1. Install Ollama
+### 🤖 2. Local AI Diagnostics
 
-Download and install Ollama from the official website:
+OmniTrace uses [Ollama](https://ollama.com/) to run a local language model.
+
+The AI router sends relevant debugging context to the configured local model, which analyzes the failure and generates a diagnosis and proposed fix.
+
+The result is a workflow that can operate without a third-party AI API.
+
+**The distinction matters:** OmniTrace is not simply an HTTP client wrapped around a hosted LLM. Its diagnostic workflow is designed around local inference, runtime monitoring, persistent debugging history, and source-code patching.
+
+### 🩹 3. Interactive Auto-Patcher
+
+A diagnosis is useful. A reviewable patch is better.
+
+OmniTrace can generate a regex-based source-code patch and ask for your approval before applying it.
+
+The intended workflow is:
+
+1. A runtime failure is detected.
+2. The local LLM analyzes the traceback.
+3. OmniTrace generates a proposed source-code modification.
+4. You review the proposed change and choose whether to apply it.
+5. OmniTrace creates a backup before modifying the source file.
+6. The patch is applied if approved.
+
+The approval prompt keeps the developer in control.
+
+```text
+[OmniTrace] Runtime exception detected.
+
+[AI Router] Analyzing traceback with local LLM...
+[AI Router] Diagnosis complete.
+
+[Auto-Patcher] Proposed source-code modification:
+             <generated patch>
+
+Apply this patch? [y/n]:
+```
+
+*Illustrative terminal output; the exact output depends on your implementation.*
+
+**Important:** Regex-based patches are intentionally lightweight, but they are not syntax-aware. A generated patch can match unintended text or produce invalid Python. Review every change and test the affected code before relying on it.
+
+### ⏪ 4. Safety Net and Rollback
+
+AI-generated code is not guaranteed to be correct.
+
+Before modifying a source file, OmniTrace creates a `.bak` backup so you have a recovery path if the patch introduces a regression.
+
+Restore a file using:
+
+```bash
+omnitrace revert path/to/file.py
+```
+
+This provides a straightforward recovery mechanism without requiring you to reconstruct the previous file manually.
+
+**Keep your Git working tree clean and commit important changes before applying automated patches.** A backup is a recovery aid, not a replacement for version control.
+
+### 📊 5. Local Debug Dashboard
+
+Inspect your debugging history through a lightweight Flask web interface.
+
+```bash
+omnitrace --ui
+```
+
+The dashboard uses Flask, HTMX, and Tailwind CSS to present historical crashes and their associated diagnoses.
+
+- Browse previously recorded errors.
+- Inspect historical diagnostic information.
+- Use the persistent debug ledger to investigate recurring failures.
+- Access the dashboard through your local browser.
+
+The dashboard complements the terminal workflow without requiring a separate cloud service.
+
+### 🗃️ 6. Persistent Debug Ledger
+
+OmniTrace uses SQLite to maintain a local history of debugging activity.
+
+Instead of treating every exception as an isolated event, it preserves records that can help you investigate earlier failures and understand recurring problems.
+
+SQLite keeps the persistence layer lightweight, embedded, and easy to run alongside a local development environment.
+
+---
+
+## 🚀 Quick Start
+
+Get OmniTrace running in your local development environment.
+
+### Prerequisites
+
+You'll need:
+
+| Requirement | Purpose |
+|---|---|
+| Python 3.9+ | Run OmniTrace |
+| Git | Clone the repository |
+| [Ollama](https://ollama.com/) | Run the local language model |
+| Llama 3 | Power local AI diagnostics |
+
+> **Note:** Python 3.9+ is a placeholder requirement. Verify the minimum version supported by your package before publishing.
+
+### Step 1: Install Ollama
+
+Download Ollama from:
 
 https://ollama.com/
 
-### 2. Download a Language Model
+Install it and ensure its local service is running.
 
-Pull the default model:
+Pull the model used by your OmniTrace configuration:
 
 ```bash
-ollama pull llama3.2
+ollama pull llama3
 ```
 
-Ensure Ollama is running before using OmniTrace.
+Check that the model is available:
 
-### 3. Clone the Repository
+```bash
+ollama list
+```
 
-Replace `YOUR_USERNAME` with your GitHub username or organization.
+If your implementation uses a different Ollama model identifier, use that exact identifier instead.
+
+### Step 2: Clone OmniTrace
 
 ```bash
 git clone https://github.com/YOUR_USERNAME/omnitrace.git
 cd omnitrace
 ```
 
-### 4. Create a Virtual Environment
+Replace `YOUR_USERNAME` with the actual GitHub repository owner.
 
-Create and activate a Python virtual environment.
+### Step 3: Create a Virtual Environment
 
 **Linux / macOS**
 
@@ -78,211 +235,281 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 ```
 
-### 5. Install OmniTrace
+### Step 4: Install the Project
 
-Install the project in editable mode:
+Install OmniTrace and its dependencies:
 
 ```bash
 pip install -e .
 ```
 
-Once installation is complete, the `omnitrace` command should be available in your environment.
-
-## 💡 Usage
-
-OmniTrace supports three operating modes.
-
-### Mode 1: Debug a Python Script
-
-Run a Python script through OmniTrace to capture errors and request AI-powered diagnostics.
+Verify the CLI installation:
 
 ```bash
-omnitrace my_broken_script.py
+omnitrace --help
 ```
 
-**How it works:**
+If the command is unavailable, check that the project defines the appropriate console-script entry point in its packaging configuration.
 
-1. OmniTrace executes the specified Python script.
-2. It captures errors and stack traces.
-3. It sends relevant diagnostic information to your local Ollama model.
-4. It displays an explanation of the error and suggested fixes.
+### Step 5: Run OmniTrace
 
-Replace `my_broken_script.py` with the path to your Python script.
+Choose the workflow that fits your needs.
 
-**Use case:** Quickly understand exceptions and investigate bugs while developing Python applications.
-
-### Mode 2: Monitor Application Logs
-
-Monitor a log file for errors while your application runs.
+**Option A: Monitor application logs**
 
 ```bash
 omnitrace --watch app.log
 ```
 
-**How it works:**
+Start your Python application and let OmniTrace monitor the log file for supported runtime errors.
 
-1. OmniTrace monitors the specified log file.
-2. It detects stack traces as they appear.
-3. It sends relevant error information to your local LLM.
-4. It displays a diagnosis and suggested solutions.
+Make sure your application writes its tracebacks to `app.log`.
 
-This mode is useful for debugging background services and applications that write errors to log files.
-
-> **Note:** Log monitoring requires your application to write errors to the monitored file. Detection behavior depends on the implementation.
-
-### Mode 3: Dashboard (Visualize Your Debug Ledger)
-
-Launch the local web dashboard to explore historical crash logs and AI-generated diagnoses.
+**Option B: Launch the dashboard**
 
 ```bash
 omnitrace --ui
 ```
 
-**Dashboard features:**
+Open the local URL printed by the application to inspect the debugging history.
 
-- **📊 Crash History:** Browse previously recorded crashes and stack traces.
-- **🤖 AI Diagnoses:** Review explanations and suggested fixes for historical errors.
-- **🗃️ SQLite Storage:** Access debugging records persisted in a local SQLite database.
-- **🔍 Error Investigation:** Review past failures to help identify recurring problems.
-
-**How it works:**
-
-1. Run `omnitrace --ui` in your terminal.
-2. OmniTrace starts its local web dashboard.
-3. Open the local URL displayed in your terminal.
-4. Browse historical crash records and their associated AI diagnoses.
-
-The dashboard makes it easier to investigate past errors without manually searching through log files or querying the database.
-
-> **Privacy note:** Keep the dashboard bound to localhost unless remote access is explicitly configured and secured.
-
-## ⚙️ Configuration
-
-OmniTrace uses Ollama to run language models locally.
-
-You can change the model using the `OMNITRACE_MODEL` environment variable.
-
-### Linux / macOS
+**Option C: Revert a patched file**
 
 ```bash
-export OMNITRACE_MODEL="qwen2.5-coder"
+omnitrace revert path/to/file.py
 ```
 
-### Windows (PowerShell)
-
-```powershell
-$env:OMNITRACE_MODEL = "qwen2.5-coder"
-```
-
-Download the selected model if it is not already available:
-
-```bash
-ollama pull qwen2.5-coder
-```
-
-If `OMNITRACE_MODEL` is not set, OmniTrace uses its configured default model, expected to be `llama3.2`.
-
-## 🔐 Privacy and Security
-
-OmniTrace is designed to keep your debugging workflow local by using Ollama for AI inference.
-
-When configured to use a local Ollama instance:
-
-- Your code does not need to be sent to a third-party AI API.
-- Stack traces can be analyzed locally.
-- Debugging records can be stored in a local SQLite database.
-- Proprietary source code can remain on your machine.
-
-**Security recommendations:**
-
-- Avoid including passwords, API keys, access tokens, or other secrets in logs.
-- Keep the dashboard accessible only from trusted interfaces.
-- Protect your SQLite database and log files from unauthorized access.
-- Review any suggested code changes before applying them.
-
-Local inference does not automatically guarantee complete privacy. Ensure your application, logging configuration, and additional integrations do not transmit sensitive information externally.
-
-## 🛠️ Troubleshooting
-
-### Ollama is not responding
-
-Make sure Ollama is installed and running.
-
-Check the installed models:
-
-```bash
-ollama list
-```
-
-### The selected model is unavailable
-
-Download the model you want to use:
-
-```bash
-ollama pull llama3.2
-```
-
-For a different model, replace `llama3.2` with the configured model name.
-
-### The `omnitrace` command is not found
-
-Ensure your virtual environment is activated and install the project again:
-
-```bash
-pip install -e .
-```
-
-If the command is still unavailable, verify that your packaging configuration defines the appropriate command-line entry point.
-
-### The dashboard does not start
-
-Try the following:
-
-1. Ensure OmniTrace is installed correctly.
-2. Confirm that the dashboard command-line option is supported.
-3. Check the terminal output for startup errors.
-4. Verify that the dashboard's configured port is available.
-
-### No historical crashes appear in the dashboard
-
-Check that:
-
-- OmniTrace has recorded crashes in the SQLite database.
-- The dashboard is reading from the correct database file.
-- The application has permission to access the database.
-
-## 🗺️ Roadmap
-
-Potential future improvements include:
-
-- [ ] Enhanced root-cause analysis.
-- [ ] Context-aware code fix suggestions.
-- [ ] Automated patch generation and application.
-- [ ] Configurable log monitoring and filtering.
-- [ ] Support for additional programming languages.
-- [ ] Search and filtering for historical crash records.
-- [ ] Exportable diagnostic reports.
-- [ ] Integration with testing tools and development workflows.
-
-## 🤝 Contributing
-
-Contributions, bug reports, and feature suggestions are welcome.
-
-To contribute:
-
-1. Fork the repository.
-2. Create a branch for your changes.
-3. Implement and test your improvements.
-4. Submit a pull request describing your changes.
-
-Please include relevant test cases when introducing new functionality.
-
-## 📄 License
-
-Add your project's license information here.
-
-If you intend to distribute OmniTrace as an open-source project, include a `LICENSE` file in the repository.
+Use this command to restore a file from the backup created by OmniTrace, according to your implementation's rollback behavior.
 
 ---
 
-**OmniTrace — Debug locally. Understand errors faster. Keep your code private.**
+## 🏗️ Architecture
+
+OmniTrace combines runtime monitoring, local AI inference, source-code patching, and persistent state into one debugging workflow.
+
+### System Overview
+
+```text
+┌─────────────────────────────────────────────────────────┐
+│                    Python Application                  │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                  OmniTrace Daemon                       │
+│                                                         │
+│  Watches logs → Detects tracebacks → Extracts context   │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                     AI Router                           │
+│                                                         │
+│  Builds diagnostic context → Calls local Ollama model  │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                  Local LLM (Llama 3)                    │
+│                                                         │
+│  Analyzes the failure → Produces diagnosis and patch    │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                            ▼
+┌─────────────────────────────────────────────────────────┐
+│                   Auto-Patcher                          │
+│                                                         │
+│  Creates backup → Requests approval → Applies patch     │
+└───────────────────────────┬─────────────────────────────┘
+                            │
+                  ┌─────────┴──────────┐
+                  ▼                    ▼
+┌────────────────────────┐  ┌────────────────────────────┐
+│     Source File        │  │      SQLite Ledger         │
+│                        │  │                            │
+│  Approved code change  │  │  Crash and diagnosis data  │
+└────────────────────────┘  └──────────────┬─────────────┘
+                                           │
+                                           ▼
+                              ┌──────────────────────────┐
+                              │    Flask + HTMX UI       │
+                              │                          │
+                              │  Historical debug view   │
+                              └──────────────────────────┘
+```
+
+*Conceptual architecture; component boundaries and data flow should be aligned with the implementation.*
+
+### Component Breakdown
+
+| Component | Technology | Responsibility |
+|---|---|---|
+| Daemon | Python | Monitors application logs and detects supported failures |
+| AI Router | Python + Ollama | Sends diagnostic context to the local LLM |
+| Local Model | Llama 3 via Ollama | Generates diagnoses and proposed code changes |
+| Auto-Patcher | Python + Regex | Applies approved source-code modifications |
+| Safety Net | File backups | Preserves a recoverable copy before patching |
+| Debug Ledger | SQLite | Stores historical debugging records |
+| Web Dashboard | Flask + HTMX + Tailwind CSS | Presents historical crashes and diagnoses |
+| CLI | Python + Rich | Provides terminal interaction and formatted output |
+
+### How the Components Work Together
+
+**1. Detection**
+
+The daemon watches the configured log file and identifies supported Python tracebacks.
+
+**2. Context extraction**
+
+OmniTrace extracts the relevant error information and prepares it for diagnosis.
+
+**3. AI routing**
+
+The AI router sends the diagnostic context to Ollama, which runs the selected model locally.
+
+**4. Diagnosis and patch generation**
+
+The model returns an explanation and a proposed source-code modification.
+
+**5. Human approval and patching**
+
+The Auto-Patcher requests approval, creates a backup, and applies the accepted change.
+
+**6. Persistence and inspection**
+
+SQLite stores debugging records, while the Flask dashboard provides a visual interface for reviewing historical failures.
+
+The result is a connected workflow from runtime failure to a proposed source-code change, with persistent state and an explicit approval step.
+
+---
+
+## 🔐 Safety First
+
+OmniTrace can modify source files. That makes safety part of the core design, not an optional extra.
+
+### Local inference is not the same as guaranteed privacy
+
+When configured to use a local Ollama instance, the AI inference step does not require sending source code to a hosted AI API.
+
+However, privacy also depends on your application configuration, logs, network settings, and other integrations.
+
+Avoid recording credentials, API keys, access tokens, and other sensitive values in logs.
+
+### AI-generated patches require review
+
+LLMs can produce incorrect or fabricated fixes. Regex-based source transformations introduce additional risks because they do not understand Python's syntax tree or program semantics.
+
+Before applying a patch:
+
+- Review the proposed modification.
+- Confirm that the intended source file and text are being changed.
+- Keep a version-control checkpoint.
+- Run relevant tests after applying the change.
+- Revert the change if it causes unexpected behavior.
+
+### Backups are a recovery mechanism, not a transaction system
+
+A `.bak` file is useful for recovering the previous source contents, but it does not guarantee that an operation is atomic, that concurrent edits are preserved, or that every kind of failure can be rolled back safely.
+
+For critical codebases, use Git and a proper test suite alongside OmniTrace.
+
+---
+
+## 🧰 Tech Stack
+
+OmniTrace uses a deliberately lightweight stack designed around local execution.
+
+| Layer | Technology | Why it fits |
+|---|---|---|
+| Core runtime | Python | Integrates naturally with Python debugging workflows |
+| CLI | Rich | Improves terminal readability and interaction |
+| Patch engine | Regex | Provides lightweight text-based source transformations |
+| AI inference | Ollama + Llama 3 | Runs language-model inference locally |
+| Persistence | SQLite | Provides an embedded database without a separate database server |
+| Web backend | Flask | Keeps the dashboard backend lightweight |
+| Dynamic UI | HTMX | Enables interactive web updates without a large frontend framework |
+| Styling | Tailwind CSS | Provides utility-based UI styling |
+
+The architecture keeps the main workflow close to the developer's machine, reducing the need for external services and infrastructure.
+
+---
+
+## 🗺️ Roadmap
+
+OmniTrace v1.0 establishes the core workflow: detect failures, request a local AI diagnosis, propose a patch, and preserve debugging history.
+
+The next step is making that workflow more context-aware and operationally robust.
+
+### Planned Features
+
+- [ ] **Cross-file debugging with RAG**  
+  Retrieve relevant code and debugging context across multiple files to improve diagnoses for failures that cannot be understood from a single traceback.
+
+- [ ] **Discord webhook notifications**  
+  Send crash summaries and diagnostic alerts to configured Discord channels.
+
+- [ ] **Webhook rate limiting**  
+  Prevent repeated crashes from flooding notification channels with duplicate or excessive alerts.
+
+- [ ] **Improved patch validation**  
+  Validate proposed modifications and integrate optional syntax checks and targeted test execution.
+
+- [ ] **Smarter patch generation**  
+  Explore syntax-aware patching to reduce the risks associated with regex-based source transformations.
+
+- [ ] **Enhanced debug ledger**  
+  Improve filtering and searching for recurring exceptions and historical diagnoses.
+
+- [ ] **Configurable model selection**  
+  Make it easier to select and configure supported local Ollama models.
+
+- [ ] **Expanded diagnostic context**  
+  Incorporate additional relevant runtime information while minimizing unnecessary exposure of sensitive data.
+
+---
+
+## 🤝 Contributing
+
+OmniTrace is an open-source project, and contributions are welcome.
+
+Whether you're interested in debugging workflows, local AI inference, patch validation, or developer tooling, there's room to help improve the project.
+
+### Ways to Contribute
+
+- Report bugs and unexpected behavior.
+- Propose new features.
+- Improve documentation.
+- Add tests for crash detection and patch generation.
+- Improve the safety of source-code modifications.
+- Help expand local model support.
+
+### Development Workflow
+
+1. Fork the repository.
+2. Create a feature branch.
+3. Implement and test your changes.
+4. Submit a pull request describing the problem and your solution.
+
+For changes to the patching engine, include tests covering both intended replacements and cases where the target source text should remain unchanged.
+
+---
+
+## 📄 License
+
+OmniTrace is intended to be released under the MIT License.
+
+See [`LICENSE`](LICENSE) for the full license text.
+
+*Add the actual MIT license file to the repository before publishing this claim.*
+
+---
+
+<div align="center">
+
+### ⚡ Debug locally. Patch deliberately. Keep your code private.
+
+**OmniTrace — Turning runtime failures into actionable fixes.**
+
+If you find OmniTrace useful, consider giving the repository a ⭐ on GitHub.
+
+</div>
