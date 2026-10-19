@@ -11,6 +11,8 @@ from omnitrace.db.database import init_db, log_error
 from omnitrace.ui.server import start_ui
 from rich.prompt import Confirm
 from omnitrace.core.patcher import extract_and_apply_patch
+from omnitrace.core.patcher import revert_file
+
 
 console = Console()
 
@@ -53,9 +55,16 @@ def main():
         console.print("  [dim]Daemon mode:[/dim]  omnitrace --watch <log_file.log>")
         console.print("  [dim]UI mode:[/dim]      omnitrace --ui")
         return 1
+    
+    if sys.argv[1] == "revert":
+        if len(sys.argv) < 3:
+            console.print("[bold red]Error:[/bold red] Please specify a file to revert.")
+            return 1
+        revert_file(sys.argv[2])
+        return 0
 
     # Check if user wants to run the Dashboard UI
-    if sys.argv[1] == "--ui":
+    elif sys.argv[1] == "--ui":
         console.print("[bold blue]Starting OmniTrace Dashboard...[/bold blue]")
         console.print("🌐 View your debug ledger at: [bold underline cyan]http://127.0.0.1:5000[/bold underline cyan]\n")
         try:

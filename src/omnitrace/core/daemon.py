@@ -7,6 +7,8 @@ from rich.markdown import Markdown
 from omnitrace.core.ai_router import analyze_error
 from omnitrace.core.dispatcher import send_to_discord
 from omnitrace.db.database import log_error
+from rich.prompt import Confirm
+from omnitrace.core.patcher import extract_and_apply_patch
 
 console = Console()
 
@@ -22,6 +24,11 @@ def process_error(error_trace: str):
 
     send_to_discord(error_trace.strip(), diagnosis)
     log_error(error_trace.strip(), diagnosis)
+
+    if "<<<FILEPATH:" in diagnosis:
+        console.print("\n")
+        if Confirm.ask("[bold yellow]OmniTrace generated an auto-fix. Do you want to apply it?[/bold yellow]"):
+            extract_and_apply_patch(diagnosis)
     
     console.print("\n[bold dim]OmniTrace is actively watching for new errors...[/bold dim]\n")
 

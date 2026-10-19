@@ -6,7 +6,7 @@ def simulate_background_crash():
     try:
         # Intentional error: Dictionary key lookup failure
         config = {"host": "localhost", "port": 8080}
-        db_password = config["database_password"]
+        db_password = config.get("database_password")
     except Exception:
         return traceback.format_exc()
 

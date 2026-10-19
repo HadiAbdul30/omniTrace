@@ -6,6 +6,22 @@ from rich.console import Console
 
 console = Console()
 
+def revert_file(filepath: str):
+    """Restores a file from its OmniTrace .bak backup."""
+    bak_path = f"{filepath}.bak"
+    
+    if os.path.exists(bak_path):
+        with open(bak_path, 'r') as f:
+            original_content = f.read()
+            
+        with open(filepath, 'w') as f:
+            f.write(original_content)
+            
+        os.remove(bak_path)
+        console.print(f"[bold green]✓ Successfully reverted {filepath} to its previous state.[/bold green]")
+    else:
+        console.print(f"[bold red]❌ Safety abort: No backup file found at {bak_path}[/bold red]")
+
 def extract_and_apply_patch(diagnosis: str):
     """Parses the LLM output for a patch block and applies it intelligently."""
     file_match = re.search(r'<<<FILEPATH:\s*(.+?)>>>', diagnosis)

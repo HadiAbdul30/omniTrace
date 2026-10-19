@@ -1,8 +1,1 @@
-[INFO] System starting...
-[INFO] Connecting to local services...
-[ERROR] Unhandled exception in worker thread:
-Traceback (most recent call last):
-  File "/home/hadi/Escritorio/omniTrace/examples/dummy_logger.py", line 9, in simulate_background_crash
-    db_password = config["database_password"]
-                  ~~~~~~^^^^^^^^^^^^^^^^^^^^^
-KeyError: 'database_password'
+
