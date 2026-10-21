@@ -1,5 +1,7 @@
 # Environments
 .env
+.env.*
+!.env.example
 .venv
 env/
 venv/
@@ -12,6 +14,26 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
+
+# Credentials, local diagnostics, and patch backups
+.aws/
+.ssh/
+.kube/
+.npmrc
+.pypirc
+.netrc
+id_rsa
+id_ed25519
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+*.bak
+*.pre-revert
+.omnitrace.db
+.omnitrace.db-*
+.omnitrace-tmp-*
 
 # Build dirs
 build/

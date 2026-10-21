@@ -5,23 +5,26 @@ build-backend = "hatchling.build"
 [project]
 name = "omnitrace"
 version = "0.1.0"
-description = "A privacy-first, local AI debugging and state-orchestration fabric."
+description = "Local-first Python crash diagnosis with reviewable patches."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [
     { name = "Abdul Hadi", email = "hadiabdul300908@gmail.com" }
 ]
-dependencies = [
-    # Add your core runtime dependencies here (e.g., "ollama", "flask")
-]
+dependencies = ["rich>=13.7,<15"]
 
 [project.optional-dependencies]
 dev = [
+    "build",
     "pytest",
     "ruff",     # Modern, incredibly fast linter/formatter
     "mypy"      # Type checking
 ]
+dashboard = ["Flask>=3.0,<4"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/omnitrace"]
 
 [project.scripts]
 omnitrace = "omnitrace.__main__:main"

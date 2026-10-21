@@ -1,7 +1,10 @@
 # src/omnitrace/db/database.py
-import sqlite3
 import os
+import sqlite3
+from contextlib import closing
 from datetime import datetime
+from pathlib import Path
+
 from rich.console import Console
 
 console = Console()
@@ -11,36 +14,36 @@ DB_PATH = os.path.expanduser("~/.omnitrace.db")
 
 def init_db():
     """Initializes the SQLite database and creates the logs table if it doesn't exist."""
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS error_logs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            timestamp TEXT NOT NULL,
-            error_trace TEXT NOT NULL,
-            ai_diagnosis TEXT NOT NULL
-        )
-    """)
-    
-    conn.commit()
-    conn.close()
+    if Path(DB_PATH).is_symlink():
+        raise OSError("refusing to use a symbolic link for the local diagnostic database")
+    if os.name == "posix":
+        try:
+            db_fd = os.open(DB_PATH, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        except FileExistsError:
+            if Path(DB_PATH).is_symlink():
+                raise OSError("refusing to use a symbolic link for the local diagnostic database")
+            os.chmod(DB_PATH, 0o600)
+        else:
+            os.close(db_fd)
+    with closing(sqlite3.connect(DB_PATH, timeout=5)) as conn, conn:
+        conn.execute("""
+                CREATE TABLE IF NOT EXISTS error_logs (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    timestamp TEXT NOT NULL,
+                    error_trace TEXT NOT NULL,
+                    ai_diagnosis TEXT NOT NULL
+                )
+            """)
 
 def log_error(error_trace: str, ai_diagnosis: str):
     """Inserts a new crash report into the database."""
     try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        cursor.execute(
-            "INSERT INTO error_logs (timestamp, error_trace, ai_diagnosis) VALUES (?, ?, ?)",
-            (timestamp, error_trace, ai_diagnosis)
-        )
-        
-        conn.commit()
-        conn.close()
+        with closing(sqlite3.connect(DB_PATH, timeout=5)) as conn, conn:
+            conn.execute(
+                "INSERT INTO error_logs (timestamp, error_trace, ai_diagnosis) VALUES (?, ?, ?)",
+                (timestamp, error_trace[:200_000], ai_diagnosis[:200_000]),
+            )
         console.print("[dim]✓ Crash saved to local SQLite database.[/dim]")
-    except Exception as e:
-        console.print(f"[bold red]Failed to save to database: {e}[/bold red]")
+    except sqlite3.Error as exc:
+        console.print(f"[bold red]Failed to save crash to local database ({type(exc).__name__}).[/bold red]")

@@ -1,16 +1,19 @@
 # src/omnitrace/core/daemon.py
-import time
 import os
+import time
+
 from rich.console import Console
-from rich.panel import Panel
 from rich.markdown import Markdown
+from rich.panel import Panel
+
 from omnitrace.core.ai_router import analyze_error
 from omnitrace.core.dispatcher import send_to_discord
+from omnitrace.core.review import review_and_apply
 from omnitrace.db.database import log_error
-from rich.prompt import Confirm
-from omnitrace.core.patcher import extract_and_apply_patch
 
 console = Console()
+MAX_TRACE_BYTES = 100_000
+IDLE_FLUSH_SECONDS = 1.0
 
 def process_error(error_trace: str):
     """Handles the UI and AI routing for a detected background error."""
@@ -20,15 +23,17 @@ def process_error(error_trace: str):
         diagnosis = analyze_error(error_trace.strip())
         
     console.print("\n[bold cyan]🩺 OMNITRACE DIAGNOSIS:[/bold cyan]\n")
-    console.print(Markdown(diagnosis))
+    display_text = diagnosis.partition("<<<FILEPATH:")[0].strip()
+    console.print(Markdown(display_text or "No diagnosis text was returned."))
 
     send_to_discord(error_trace.strip(), diagnosis)
     log_error(error_trace.strip(), diagnosis)
 
-    if "<<<FILEPATH:" in diagnosis:
+    if "<<<" in diagnosis:
         console.print("\n")
-        if Confirm.ask("[bold yellow]OmniTrace generated an auto-fix. Do you want to apply it?[/bold yellow]"):
-            extract_and_apply_patch(diagnosis)
+        review_and_apply(diagnosis, console)
+    else:
+        console.print("Patch report: no valid structured patch is available; original files were not changed.")
     
     console.print("\n[bold dim]OmniTrace is actively watching for new errors...[/bold dim]\n")
 
@@ -46,25 +51,35 @@ def start_daemon(log_file: str):
         
         buffer = []
         collecting_traceback = False
+        buffer_bytes = 0
+        last_line_at = 0.0
         
         while True:
             line = f.readline()
             
             if not line:
                 # If we were collecting an error and the file paused, process it
-                if collecting_traceback and len(buffer) > 0:
+                if (collecting_traceback and buffer
+                        and time.monotonic() - last_line_at >= IDLE_FLUSH_SECONDS):
                     process_error("".join(buffer))
                     buffer = []
                     collecting_traceback = False
+                    buffer_bytes = 0
                 
                 # Sleep briefly before checking for new lines
-                time.sleep(0.5)
+                time.sleep(0.1)
                 continue
                 
             # Detect the start of a Python stack trace
             if "Traceback (most recent call last):" in line:
                 collecting_traceback = True
-                buffer.append(line)
+                buffer = [line[:MAX_TRACE_BYTES]]
+                buffer_bytes = len(buffer[0].encode("utf-8", errors="replace"))
+                last_line_at = time.monotonic()
             elif collecting_traceback:
-                # Keep appending lines to the buffer as long as the error is printing
-                buffer.append(line)
+                last_line_at = time.monotonic()
+                remaining = MAX_TRACE_BYTES - buffer_bytes
+                if remaining > 0:
+                    clipped = line.encode("utf-8", errors="replace")[:remaining].decode("utf-8", errors="ignore")
+                    buffer.append(clipped)
+                    buffer_bytes += len(clipped.encode("utf-8", errors="replace"))
