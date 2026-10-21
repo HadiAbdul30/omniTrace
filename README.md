@@ -12,7 +12,7 @@ No cloud AI APIs. No leaking proprietary code. No switching context between your
 
 <br>
 
-![Python](https://img.shields.io/badge/Python-3.9%2B-blue?logo=python&logoColor=white)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 ![AI](https://img.shields.io/badge/AI-Local%20LLM-purple?logo=ollama)
 ![Status](https://img.shields.io/badge/Status-v1.0-orange)
@@ -213,11 +213,9 @@ If your implementation uses a different Ollama model identifier, use that exact 
 ### Step 2: Clone OmniTrace
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/omnitrace.git
+git clone https://github.com/hadiabdul30/omnitrace.git
 cd omnitrace
 ```
-
-Replace `YOUR_USERNAME` with the actual GitHub repository owner.
 
 ### Step 3: Create a Virtual Environment
 
